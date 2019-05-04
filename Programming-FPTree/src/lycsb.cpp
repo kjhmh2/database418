@@ -20,6 +20,7 @@ int main()
     leveldb::Options options;
     leveldb::WriteOptions write_options;
     // TODO: open and initial the levelDB
+    options.create_if_missing = true;
     leveldb::ReadOptions read_options;
     leveldb::Status status = leveldb::DB::Open(options, "testdb", &db);
     assert(status.ok());
@@ -36,7 +37,7 @@ int main()
     printf("Load phase begins \n");
     // TODO: read the ycsb_load and store
 	// load the file
-    ycsb_load = fopen(load, "r");
+    ycsb_load = fopen(load.c_str(), "r");
     int index = 0;
     char line[100];
     while (fgets(line, 100, ycsb_load) != NULL)
@@ -78,7 +79,7 @@ int main()
     {
         if (ifInsert[i])
         {
-            status = db->Put(write_options, key[i], key[i]);
+            status = db->Put(write_options, (char*)key[i], (char*)key[i]);
             i ++;
         }
     }
@@ -96,9 +97,8 @@ int main()
 
     // TODO:read the ycsb_run and store
 	// load the file
-    ycsb_run = fopen(load, "r");
-    int index = 0;
-    char line[100];
+    ycsb_run = fopen(load.c_str(), "r");
+    index = 0;
     while (fgets(line, 100, ycsb_run) != NULL)
     {
         string str = line;
@@ -128,7 +128,7 @@ int main()
         }
         key[index ++] = atoll(value.c_str());
         operation_num ++;		//count the operations
-        READ_WRITE_NUM ++;
+        //READ_WRITE_NUM ++;
     }
 
     clock_gettime(CLOCK_MONOTONIC, &start);
@@ -140,10 +140,10 @@ int main()
     {
         if (ifInsert[i])
         {
-            status = db->Put(write_options, key[i], key[i]);	//insert operation
+            status = db->Put(write_options, (char*)key[i], (char*)key[i]);	//insert operation
         }
         else
-            status = db->Get(read_options, key[i], &res);		//read operation
+            status = db->Get(read_options, (char*)key[i], &res);		//read operation
     }
 
 	//calculate the time
