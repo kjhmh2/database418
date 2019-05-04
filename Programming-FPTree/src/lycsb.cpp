@@ -35,7 +35,7 @@ int main()
 
     printf("Load phase begins \n");
     // TODO: read the ycsb_load and store
-
+	// load the file
     ycsb_load = fopen(load, "r");
     int index = 0;
     char line[100];
@@ -51,20 +51,21 @@ int main()
                 judge = false;
                 continue;
             }
-            if (judge)
+            if (judge)	//split the message
                 op += line[i];
             else
                 value += line[i];
         }
+		// store the message
         if (op == "INSERT")
         {
             ifInsert[index] == true;
-            inserted ++;
+            inserted ++;	//count the operations
         }
         else
         {
             ifInsert[index] == false;
-            queried ++;
+            queried ++;		//count the operations
         }
         key[index ++] = atoll(value.c_str());
     }
@@ -72,6 +73,7 @@ int main()
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     // TODO: load the workload in LevelDB
+	// LevelDB operations: Put
     for (int i = 0; i < inserted; )
     {
         if (ifInsert[i])
@@ -80,7 +82,8 @@ int main()
             i ++;
         }
     }
-
+	
+	//calculate the time
     clock_gettime(CLOCK_MONOTONIC, &finish);
 	single_time = (finish.tv_sec - start.tv_sec) * 1000000000.0 + (finish.tv_nsec - start.tv_nsec);
 
@@ -92,6 +95,7 @@ int main()
     inserted = 0;		
 
     // TODO:read the ycsb_run and store
+	// load the file
     ycsb_run = fopen(load, "r");
     int index = 0;
     char line[100];
@@ -107,6 +111,7 @@ int main()
                 judge = false;
                 continue;
             }
+			// split the message
             if (judge)
                 op += line[i];
             else
@@ -122,25 +127,26 @@ int main()
             ifInsert[index] == false;
         }
         key[index ++] = atoll(value.c_str());
-        operation_num ++;
+        operation_num ++;		//count the operations
         READ_WRITE_NUM ++;
     }
 
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     // TODO: operate the levelDB
+	// LevelDB operations
     string res;
     for (int i = 0; i < operation_num; ++ i)
     {
         if (ifInsert[i])
         {
-            status = db->Put(write_options, key[i], key[i]);
+            status = db->Put(write_options, key[i], key[i]);	//insert operation
         }
         else
-            status = db->Get(read_options, key[i], &res);
+            status = db->Get(read_options, key[i], &res);		//read operation
     }
 
-
+	//calculate the time
 	clock_gettime(CLOCK_MONOTONIC, &finish);
 	single_time = (finish.tv_sec - start.tv_sec) + (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
     printf("Run phase finishes: %d/%d items are inserted/searched\n", operation_num - inserted, inserted);
