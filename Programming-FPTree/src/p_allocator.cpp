@@ -114,6 +114,21 @@ PAllocator::PAllocator() {
 
 PAllocator::~PAllocator() {
     // TODO
+    ofstream allocatorCatalogOut(allocatorCatalogPath, ios::out|ios::binary);
+    ofstream freeListFileOut(freeListPath, ios::out|ios::binary);
+    bitset<64> b1(maxFileId);
+    bitset<64> b2(freeNum);
+    bitset<64> b3(startLeaf.fileId);
+    bitset<64> b4(startLeaf.offset);
+    allocatorCatalogOut << b1 << b2 << b3 << b4;
+    allocatorCatalogOut.close();
+    for(int i = 0; i < freeNum; i ++){
+        bitset<64> b5(freeList[i].fileId);
+        bitset<64> b6(freeList[i].offset);
+        freeListFileOut << b5 << b6 << endl;
+    }
+    freeListFileOut.close();
+    pAllocator == NULL
 }
 
 // memory map all leaves to pmem address, storing them in the fId2PmAddr
@@ -124,6 +139,16 @@ void PAllocator::initFilePmemAddr() {
 // get the pmem address of the target PPointer from the map fId2PmAddr
 char* PAllocator::getLeafPmemAddr(PPointer p) {
     // TODO
+    map<uint64_t, char*>::iterator it;
+    it = fId2PmAddr.find(p.fileId);
+    if(it != fId2PmAddr.end()){
+        uint64_t startAddr =  strtoull(it->second, NULL, 10);
+        uint64_t targetAdd = startAddr + p.offset;
+        bitset<64> tmpAddr(targetAdd);
+        string s = tmpAddr.to_string();
+        char *t = (char*)s.data();
+        return t;
+    }
     return NULL;
 }
 
@@ -136,17 +161,38 @@ bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
 
 bool PAllocator::ifLeafUsed(PPointer p) {
     // TODO
-    return false;
+    for(int i = 0; i < freeList.size(); i ++){
+        if(p == freeList[i]){
+            return false;
+        }
+    }
+    return true;
 }
 
 bool PAllocator::ifLeafFree(PPointer p) {
     // TODO
+    for(int i = 0; i < freeList.size(); i ++){
+        if(p == freeList[i]){
+            return true;
+        }
+    }
     return false;
 }
 
 // judge whether the leaf with specific PPointer exists. 
 bool PAllocator::ifLeafExist(PPointer p) {
     // TODO
+    map<uint64_t, char*>::iterator it;
+    it = fId2PmAddr.find(p.fileId);
+    if(it == fId2PmAddr.end()){
+        return false;
+    }
+    else{
+        if( (p.offset - 192) % 128 != 0 || p.offset < 192 || p.offset > 192 + 15 * 128){
+            return false;
+        }
+        else return true;
+    }
 }
 
 // free and reuse a leaf
