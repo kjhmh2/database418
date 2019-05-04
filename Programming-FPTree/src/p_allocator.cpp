@@ -31,9 +31,83 @@ PAllocator::PAllocator() {
     if (allocatorCatalog.is_open() && freeListFile.is_open()) {
         // exist
         // TODO
+
+        //read allocatorCatalog
+        string catalog;
+        getline(in, catalog);
+        string maxFileID_s, freeNum_s, startID_s, startOffset_s;
+        char *maxFileID_c;
+        char *freeNum_c;
+        char *startID_c;
+        char *startOffset_c;
+
+        //load maxFileID
+        for(int i = 0; i < 64; i ++){
+            maxFileID_s += catalog[i];
+        }
+        maxFileID_c =(char*)maxFileID_s.data();
+        maxFileId = strtoull(maxFileID_c, NULL, 2);
+
+        //load freeNum
+        for(int i = 64; i < 128; i ++){
+            freeNum_s += catalog[i];
+        }
+        freeNum_c =(char*)freeNum_s.data();
+        freeNum = strtoull(freeNum_c, NULL, 2);
+
+        //load startLeaf fileID
+        for(int i = 128; i < 192; i ++){
+            startID_s += catalog[i];
+        }
+        startID_c =(char*)startID_s.data();
+        startLeaf.fileId = strtoull(startID_c, NULL, 2);
+
+        //load startLeaf offset
+        for(int i = 192; i < 256; i ++){
+            startOffset_s += catalog[i];
+        }
+        startOffset_c =(char*)startOffset_s.data();
+        startLeaf.offset = strtoull(startOffset_c, NULL, 2);
+
+        allocatorCatalog.close();
+
+        //read freeListFile
+        string oneFreeLeaf;
+        while(getline(freeListFile, oneFreeLeaf)){
+            PPointer temp;
+            string leafFileId, leafOffset;
+            for(int i = 0; i < 128; i ++){
+                leafFileId += oneFreeLeaf[i];
+            }
+            char *leafFileId_c = (char*)leafFileId.data();
+            temp.fileId = strtoull(leafFileId_c, NULL, 2);
+            for(int i = 128; i < 256; i ++){
+                leafOffset += oneFreeLeaf[i];
+            }
+            char *leafOffset_c = (char*)leafOffset.data();
+            temp.offset = strtoull(leafOffset_c, NULL, 2);
+            freeList.push_back(temp);
+        }
+        freeListFile.close();
+
     } else {
         // not exist, create catalog and free_list file, then open.
         // TODO
+        ofstream allocatorCatalogOut;
+        allocatorCatalogOut.open(allocatorCatalogPath, ios::out|ios::binary);
+        ofstream freeListFileOut;
+        freeListFileOut.open(freeListPath, ios::out|ios::binary);
+        maxFileId = 1;
+        freeNum = 0;
+        startLeaf.fileId = 0;
+        startLeaf.offset = 0;
+        bitset<64> b1(maxFileId);
+        bitset<64> b2(freeNum);
+        bitset<64> b3(startLeaf.fileId);
+        bitset<64> b4(startLeaf.offset);
+        allocatorCatalogOut << b1 << b2 << b3 << b4;
+        allocatorCatalogOut.close();
+        freeListFileOut.close();
     }
     this->initFilePmemAddr();
 }
