@@ -5,17 +5,46 @@ using namespace std;
 // Initial the new InnerNode
 InnerNode::InnerNode(const int& d, FPTree* const& t, bool _isRoot) {
     // TODO
+    degree = d;
+    tree = t;
+    nKeys = 0;
+    nChild = 0;
+    isLeaf = false;
+    isRoot = _isRoot;
+    keys = new Key();
+    childrens = new(Node*);
 }
 
 // delete the InnerNode
 InnerNode::~InnerNode() {
     // TODO
+    degree = 0;
+    delete tree;
+    tree = NULL;
+    delete keys;
+    keys = NULL;
+    delete childrens;
+    childrens = NULL;
 }
 
 // binary search the first key in the innernode larger than input key
 int InnerNode::findIndex(const Key& k) {
     // TODO
     return 0;
+    int leftIndex = 0;
+    int rightIndex = getKeyNum() - 1;
+    int midIndex;
+    while(leftIndex != rightIndex){
+        midIndex = (leftIndex + rightIndex) / 2;
+        Key midKey = getKey(midIndex);
+        if(k > midKey){
+            leftIndex = midIndex + 1;
+        }
+        else{
+            rightIndex = midIndex;
+        }
+    }
+    return leftIndex;
 }
 
 // insert the node that is assumed not full
