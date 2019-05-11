@@ -69,11 +69,11 @@ void InnerNode::insertNonFull(const Key& k, Node* const& node) {
         keys[nKeys] = k;
     }
     else{
-        for(int i = nKeys; i > index; i --){
-            Keys[i] = Keys[i - 1];
+        for(int i = nKeys; i > inserIndex; i --){
+            keys[i] = keys[i - 1];
             childrens[i + 1] = childrens[i];
         }
-        Keys[inserIndex] = k;
+        keys[inserIndex] = k;
         childrens[inserIndex + 1] = node;
     }
     nChild ++;
