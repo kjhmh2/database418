@@ -231,22 +231,63 @@ void LeafNode::printNode() {
 // new a empty leaf and set the valuable of the LeafNode
 LeafNode::LeafNode(FPTree* t) {
     // TODO
+    tree = t;
+    isLeaf = true;
+    degree = LEAF_DEGREE;
+    PAllocator::getAllocator()->getLeaf(pPointer, pmem_addr);
+    //bitmap = 
+    kv = pmem_addr;
+
+    n = 0;
+    pre = next = NULL;//
+    filePath = DATA_DIR + pPointer.fileId;
+
+    bitmapSize = 2*degree;
 }
 
 // reload the leaf with the specific Persistent Pointer
 // need to call the PAllocator
 LeafNode::LeafNode(PPointer p, FPTree* t) {
     // TODO
+    tree = t;
+    isLeaf = true;
+    degree = LEAF_DEGREE;
+    pmem_addr = PAllocator::getAllocator()->getLeafPmemAddr(p);
+    //bitmap = 
+    kv = pmem_addr;
+
+    n  = 0;
+    pre = next = NULL;//
+    pPointer = p;
+    filePath = DATA_DIR + pPointer.fileId;
+
+    bitmapSize = 2*degree;
 }
 
 LeafNode::~LeafNode() {
     // TODO
+    PAllocator::getAllocator()->freeLeaf(pPointer);
 }
 
 // insert an entry into the leaf, need to split it if it is full
-KeyNode* LeafNode::insert(const Key& k, const Value& v) {
+KeyNode* LeafNode::insert(const Key& k, const Value& v) {；
     KeyNode* newChild = NULL;
     // TODO
+    newChild->key = k;
+    newChild->node = NULL;
+    if(update(k, v)) return newChild;
+    if(n >= 2*degree){
+        newChild = split();
+        if(k < newChild.key){
+            insertNonFull(k ,v);
+        }
+        else{
+            newChild->node->insertNonFull(k, v);
+        }
+    }
+    else{
+        insertNonFull(k, v);
+    }
     return newChild;
 }
 
