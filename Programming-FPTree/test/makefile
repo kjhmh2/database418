@@ -105,13 +105,13 @@ clhash.o : $(USER_DIR)/clhash.c
 
 # utility test
 $(UTILITY_TEST) : fptree.o utility.o p_allocator.o clhash.o utility_test.o
-	$(CXX) $(CPPFLAGS) -lgtest -lgtest_main $(CXXFLAGS) $^ -o $@
+	$(CXX) -L ./ $(CPPFLAGS) -lgtest -lgtest_main $(CXXFLAGS) $^ -o $@
 utility_test.o : utility_test.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c utility_test.cpp -I $(USER_HEADER_DIR)
 
 #fptree test
 $(FPTREE_TEST) : fptree.o utility.o p_allocator.o clhash.o fptree_test.o
-	$(CXX) $(CPPFLAGS) -lgtest -lgtest_main $(CXXFLAGS)  $^ -o $@
+	$(CXX) -L ./ $(CPPFLAGS) -lgtest -lgtest_main $(CXXFLAGS)  $^ -o $@
 fptree_test.o : fptree_test.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c fptree_test.cpp -I $(USER_HEADER_DIR)
 
