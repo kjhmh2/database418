@@ -84,15 +84,48 @@ void InnerNode::insertNonFull(const Key& k, Node* const& node) {
 // return value is not NULL if split, returning the new child and a key to insert
 KeyNode* InnerNode::insert(const Key& k, const Value& v) {
     KeyNode* newChild = NULL;
+    newChild->key = k;
 
     // 1.insertion to the first leaf(only one leaf)
     if (this->isRoot && this->nKeys == 0) {
-        // TODO
+        LeafNode* tmp = new LeafNode(tree);
+        tmp->insert(k, v);
+        insertNonFull(k, tmp);
         return newChild;
     }
     
     // 2.recursive insertion
-    // TODO
+    KeyNode key_node;
+    int index = findIndex(k);
+    if (index == 0)
+    {
+        key_node = children[0]->insert(k, v);
+        keys[0] = children[0]->keys[0];
+    }
+    else
+        key_node = children[index - 1]->insert(k, v);
+    if (nKeys < 2 * degree + 1)
+        insertNonFull(key_node.key, key_node.node);
+    else    // if is full
+    {
+        KeyNode key_node2 = split();
+        if (key_node.key < key_node2.key)
+            insertNonFull(key_node.key, key_node.node);
+        else
+            ((InnerNode *)key_node2.node)->insertNonFull(key_node.key, key_node.node);
+
+        if (isRoot)
+        {
+            isRoot = false;
+            key_node2.node->isRoot = false;
+            InnerNode * tmp = new InnerNode(tree->degree, tree, true);
+            tmp->insertNonFull(keys[0], this);
+            tmp->insertNonFull((InnerNode *)key_node2.node->keys[0], (InnerNode *)key_node2.node);
+            tree->root = tmp;
+        }
+        return key_node2;
+    }
+
     return newChild;
 }
 
