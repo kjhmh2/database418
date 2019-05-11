@@ -91,24 +91,29 @@ libgtest_main.a : gtest-all.o gtest_main.o
 	$(AR) $(ARFLAGS) $@ $^
 
 # ===============================TODO: all below=================================
-fptree.o :
+fptree.o : $(USER_DIR)/fptree.cpp
+	$(CXX) $(CXXFLAGS) -c $(USER_DIR)/fptree.cpp -I $(USER_HEADER_DIR)
 
-utility.o : 
+utility.o : $(USER_DIR)/utility.cpp
+	$(CXX) $(CXXFLAGS) -c $(USER_DIR)/utility.cpp -I $(USER_HEADER_DIR) 
 
-p_allocator.o :
+p_allocator.o : $(USER_DIR)/p_allocator.cpp
+	$(CXX) $(CXXFLAGS) -c $(USER_DIR)/p_allocator.cpp -I $(USER_HEADER_DIR)
 
-clhash.o : $(USER_DIR)/clhash.c $(USER_HEADER_DIR)/utility/clhash.h
-	$(CC) $(CFLAGS) -c $(USER_DIR)/clhash.c -I $(USER_HEADER_DIR)
+clhash.o : $(USER_DIR)/clhash.c
+	$(CXX) $(CFLAGS) -c $(USER_DIR)/clhash.c -I $(USER_HEADER_DIR)
 
 # utility test
-$(UTILITY_TEST) :
+$(UTILITY_TEST) : fptree.o utility.o p_allocator.o clhash.o utility_test.o
+	$(CXX) $(CPPFLAGS) -lgtest -lgtest_main $(CXXFLAGS) $^ -o $@
+utility_test.o : utility_test.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c utility_test.cpp -I $(USER_HEADER_DIR)
 
-utility_test.o :
-
-# fptree test
-$(FPTREE_TEST) :
-
-fptree_test.o :
+#fptree test
+$(FPTREE_TEST) : fptree.o utility.o p_allocator.o clhash.o fptree_test.o
+	$(CXX) $(CPPFLAGS) -lgtest -lgtest_main $(CXXFLAGS)  $^ -o $@
+fptree_test.o : fptree_test.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c fptree_test.cpp -I $(USER_HEADER_DIR)
 
 $(BIN):
 	mkdir -p bin
