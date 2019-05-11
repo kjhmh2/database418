@@ -55,6 +55,29 @@ int InnerNode::findIndex(const Key& k) {
 // WARNING: can not insert when it has no entry
 void InnerNode::insertNonFull(const Key& k, Node* const& node) {
     // TODO
+    int inserIndex = 0;
+    bool isBreak = false;
+    for(int i = 0; i < nKeys; i ++){
+        if(k < keys[i]){
+            inserIndex = i;
+            isBreak = true;
+            break;
+        }
+    }
+    if(isBreak == false){
+        childrens[nChild] = node;
+        keys[nKeys] = k;
+    }
+    else{
+        for(int i = nKeys; i > index; i --){
+            Keys[i] = Keys[i - 1];
+            childrens[i + 1] = childrens[i];
+        }
+        Keys[inserIndex] = k;
+        childrens[inserIndex + 1] = node;
+    }
+    nChild ++;
+    nKeys ++;
 }
 
 // insert func
