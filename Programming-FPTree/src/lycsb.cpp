@@ -5,14 +5,14 @@
 #define VALUE_LEN 8
 using namespace std;
 
-const string workload = "";
+const string workload = "workloads/";
 
 const string load = workload + "10w-rw-0-100-load.txt"; // TODO: the workload_load filename
 const string run  = workload + "10w-rw-0-100-run.txt"; // TODO: the workload_run filename
 
 const string filePath = "";
 
-const int READ_WRITE_NUM = 0; // TODO: how many operations
+const int READ_WRITE_NUM = 10000; // TODO: how many operations
 
 int main()
 {        
@@ -37,7 +37,7 @@ int main()
     printf("Load phase begins \n");
     // TODO: read the ycsb_load and store
     // load the file
-    ycsb_load = fopen(load, "r");
+    ycsb_load = fopen(load.c_str(), "r");
     int index = 0;
     char line[100];
     while (fgets(line, 100, ycsb_load) != NULL)
@@ -60,27 +60,35 @@ int main()
         // store the message
         if (op == "INSERT")
         {
-            ifInsert[index] == true;
+            ifInsert[index] = true;
             inserted ++;    //count the operations
         }
         else
         {
-            ifInsert[index] == false;
+            ifInsert[index] = false;
             queried ++;     //count the operations
         }
         key[index ++] = atoll(value.c_str());
     }
 
+    fclose(ycsb_load);          // close the file
+
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     // TODO: load the workload in LevelDB
     // LevelDB operations: Put
-    for (int i = 0; i < inserted; )
+    string res;
+    char tmp[15];
+    for (int i = 0; i < 100000; ++ i)
     {
+        memcpy(tmp, key + i, 8);
         if (ifInsert[i])
         {
-            status = db->Put(write_options, key[i], key[i]);
-            i ++;
+            status = db->Put(write_options, tmp, tmp);
+        }
+        else
+        {
+            status = db->Get(read_options, tmp, &res);
         }
     }
     
@@ -88,7 +96,7 @@ int main()
     clock_gettime(CLOCK_MONOTONIC, &finish);
     single_time = (finish.tv_sec - start.tv_sec) * 1000000000.0 + (finish.tv_nsec - start.tv_nsec);
 
-    printf("Load phase finishes: %d items are inserted \n", inserted);
+    printf("Load phase finishes: %lu items are inserted \n", inserted);
     printf("Load phase used time: %fs\n", single_time / 1000000000.0);
     printf("Load phase single insert time: %fns\n", single_time / inserted);
 
@@ -97,9 +105,8 @@ int main()
 
     // TODO:read the ycsb_run and store
     // load the file
-    ycsb_run = fopen(load, "r");
-    int index = 0;
-    char line[100];
+    ycsb_run = fopen(run.c_str(), "r");
+    index = 0;
     while (fgets(line, 100, ycsb_run) != NULL)
     {
         string str = line;
@@ -120,37 +127,40 @@ int main()
         }
         if (op == "INSERT")
         {
-            ifInsert[index] == true;
+            ifInsert[index] = true;
             inserted ++;
         }
         else
         {
-            ifInsert[index] == false;
+            ifInsert[index] = false;
         }
         key[index ++] = atoll(value.c_str());
         operation_num ++;       //count the operations
-        READ_WRITE_NUM ++;
     }
+
+    fclose(ycsb_run);       // close the file
 
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     // TODO: operate the levelDB
     // LevelDB operations
-    string res;
-    for (int i = 0; i < operation_num; ++ i)
+    for (int i = 0; i < 10000; ++ i)
     {
+        memcpy(tmp, key + i, 8);
         if (ifInsert[i])
         {
-            status = db->Put(write_options, key[i], key[i]);    //insert operation
+            status = db->Put(write_options, tmp, tmp);
         }
         else
-            status = db->Get(read_options, key[i], &res);       //read operation
+        {
+            status = db->Get(read_options, tmp, &res);
+        }
     }
 
     //calculate the time
     clock_gettime(CLOCK_MONOTONIC, &finish);
     single_time = (finish.tv_sec - start.tv_sec) + (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
-    printf("Run phase finishes: %d/%d items are inserted/searched\n", operation_num - inserted, inserted);
+    printf("Run phase finishes: %lu/%lu items are inserted/searched\n", inserted, operation_num - inserted);
     printf("Run phase throughput: %f operations per second \n", READ_WRITE_NUM/single_time);    
     return 0;
 }
