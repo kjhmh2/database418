@@ -99,11 +99,11 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
     int index = findIndex(k);
     if (index == 0)
     {
-        key_node = children[0]->insert(k, v);
-        keys[0] = children[0]->keys[0];
+        key_node = childrens[0]->insert(k, v);
+        keys[0] = childrens[0]->keys[0];
     }
     else
-        key_node = children[index - 1]->insert(k, v);
+        key_node = childrens[index - 1]->insert(k, v);
     if (nKeys < 2 * degree + 1)
         insertNonFull(key_node.key, key_node.node);
     else    // if is full
