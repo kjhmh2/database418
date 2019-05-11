@@ -167,6 +167,7 @@ public:
 
 class FPTree {
 private:
+    friend class InnerNode;
     InnerNode* root;
     uint64_t   degree;
 
