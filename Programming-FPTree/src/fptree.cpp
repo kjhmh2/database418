@@ -11,8 +11,8 @@ InnerNode::InnerNode(const int& d, FPTree* const& t, bool _isRoot) {
     nChild = 0;
     isLeaf = false;
     isRoot = _isRoot;
-    keys = new Key();
-    childrens = new(Node*);
+    new Key[2 * d + 2];
+    children = new Node*[2 * d + 2];
 }
 
 // delete the InnerNode
