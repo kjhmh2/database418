@@ -165,8 +165,6 @@ KeyNode* InnerNode::split() {
     newChild->key = keys[nKeys]
     newChild->node = childrens[nChild];
     return newChild;
-
-    return newChild;
 }
 
 // remove the target entry
