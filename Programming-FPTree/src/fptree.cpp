@@ -273,12 +273,33 @@ KeyNode* LeafNode::insert(const Key& k, const Value& v) {
 // insert into the leaf node that is assumed not full
 void LeafNode::insertNonFull(const Key& k, const Value& v) {
     // TODO
+    n ++;
+    int inserIndex = findFirstZero();
+    bitmap[inserIndex] = '1';
+    kv[inserIndex]->k = k
+    kv[inserIndex]->v = v;
+    fingerprints[inserIndex] = keyHash(k);
 }
 
 // split the leaf node
 KeyNode* LeafNode::split() {
     KeyNode* newChild = new KeyNode();
     // TODO
+    newChild->key = findSplitKey();
+    LeafNode* rightNode = new LeafNode(tree);
+    rightNode->n = n / 2;
+    n -= rightNode->n;
+    next = rightNode;
+    rightNode->prev = this;
+    for(int i = rightNode->n; i <= 2 * LEAF_DEGREE； i++){
+        bitmap[i] = '0';
+    }
+    for(int i = 0; i < rightNode->n; i ++){
+        bitmap[i] = '1';
+    }
+    rightNode->persist();
+    newChild->node = rightNode;
+
     return newChild;
 }
 
@@ -295,7 +316,8 @@ Key LeafNode::findSplitKey() {
 // TIPS: bit operation
 int LeafNode::getBit(const int& idx) {
     // TODO
-    return 0;
+    if(bitmap[idx] == '0') return 0;
+    else if(bitmap[idx] == '1') return 1;
 }
 
 Key LeafNode::getKey(const int& idx) {
@@ -324,18 +346,42 @@ bool LeafNode::remove(const Key& k, const int& index, InnerNode* const& parent, 
 bool LeafNode::update(const Key& k, const Value& v) {
     bool ifUpdate = false;
     // TODO
+    Byte hashKey = keyHash(k);
+    int keyIndex = - 1;
+    for(uint64_t i = 0; i < bitmapSizel; i ++){
+        if(getBit(i) == 1 && fingerprints[i] == hashKey && kv[i].k == k){
+            keyIndex = i;
+            break;
+        }
+    }
+    if(keyIndex == -1) return ifUpdate;
+    kv[i].v = v;
+    ifUpdate = true;
     return ifUpdate;
 }
 
 // if the entry can not be found, return the max Value
 Value LeafNode::find(const Key& k) {
     // TODO
-    return MAX_VALUE;
+    Byte hashKey = keyHash(k);
+    int keyIndex = - 1;
+    for(uint64_t i = 0; i < bitmapSizel; i ++){
+        if(getBit(i) == 1 && fingerprints[i] == hashKey && kv[i].k == k){
+            keyIndex = i;
+            break;
+        }
+    }
+    if(keyIndex == -1) return MAX_VALUE;
+
+    return kv[keyIndex].v;
 }
 
 // find the first empty slot
 int LeafNode::findFirstZero() {
     // TODO
+    for(uint64_t i = 0; i < bitmapSize; i ++){
+        if(bitmap[i] == '0') return i;
+    }
     return -1;
 }
 
@@ -410,6 +456,19 @@ Value FPTree::find(Key k) {
 // TIPS: use Queue
 void FPTree::printTree() {
     // TODO
+    queue<Node*> level;
+    level.push(root);
+    while(level.empty() == false){
+        Node* toPrint = level.front();
+        level.pop();
+        toPrint->printNode();
+        if(toPrint->isLeaf == false){
+            for(int i = 0; i < ((InnerNode*)toPrint)->nChild; i ++ ){
+                level.push( ((InnerNode*)toPrint)->childrens[i]);
+            }
+        }
+        cout << endl;
+    }
 }
 
 // bulkLoading the leaf files and reload the tree
