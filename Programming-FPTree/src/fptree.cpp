@@ -11,8 +11,8 @@ InnerNode::InnerNode(const int& d, FPTree* const& t, bool _isRoot) {
     nChild = 0;
     isLeaf = false;
     isRoot = _isRoot;
-    keys = new Key();
-    childrens = new(Node*);
+    new Key[2 * d + 1];
+    childrens = new Node*[2 * d + 2];
 }
 
 // delete the InnerNode
@@ -30,7 +30,6 @@ InnerNode::~InnerNode() {
 // binary search the first key in the innernode larger than input key
 int InnerNode::findIndex(const Key& k) {
     // TODO
-    return 0;
     int leftIndex = 0;
     int rightIndex = getKeyNum() - 1;
     int midIndex;
@@ -122,6 +121,21 @@ KeyNode* InnerNode::split() {
     KeyNode* newChild = new KeyNode();
     // right half entries of old node to the new node, others to the old node. 
     // TODO
+    KeyNode* newChild = new KeyNode();
+    InnerNode *rightNode = new InnerNode(degree, tree);
+    rightNode->nChild = nChild / 2;
+    nChild  = nChild - nChild / 2;
+    rightNode->nKeys = rightNode.nChild + 1;
+    nKeys = nChild + 1;
+    for(int i = nChild + 1; i < nChild + rightNode->nChild; i ++){
+        rightNode->children[i - nChild - 1] = children[i];
+    }
+    for(int i = nKeys; i < nKeys + rightNode->nKeys; i ++){
+        rightNode->keys[i - nKeys] = keys[i];
+    }
+    newChild->key = keys[nKeys]
+    newChild->node = childrens[nChild];
+    return newChild;
 
     return newChild;
 }
@@ -184,19 +198,25 @@ void InnerNode::removeChild(const int& keyIdx, const int& childIdx) {
 // update the target entry, return true if the update succeed.
 bool InnerNode::update(const Key& k, const Value& v) {
     // TODO
-    return false;
+    int biggerKeyIndex = findIndex(k);
+    if(biggerKeyIndex == 0) return false;
+    return childrens[biggerKeyIndex - 1]->update(k, v);
 }
 
 // find the target value with the search key, return MAX_VALUE if it fails.
 Value InnerNode::find(const Key& k) {
     // TODO
-    return MAX_VALUE;
+    int keyIndex = findIndex(k) - 1;
+    if(keyIndex < 0) return MAX_VALUE;
+    return childrens[keyIndex]->find(k);
 }
 
 // get the children node of this InnerNode
 Node* InnerNode::getChild(const int& idx) {
     // TODO
     return NULL;
+    if(idx >= nChild) return NULL;
+    return childrens[idx];
 }
 
 // get the key of this InnerNode
