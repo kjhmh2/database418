@@ -20,7 +20,18 @@
 
 需要完成FPTreeDB插入和重载操作并通过相关测试，对应fptree.cpp的实现和fptree_test.cpp部分的运行
 
+插入示意图如下所示：
 
+![insert](https://github.com/kjhmh2/database418/blob/v3/pic/insert.png)
+
+和B+树的插入操作类似，主要是分为两类分析：如果有空位则直接插入；如果没有空位则需要进行节点分裂。在插入的操作中，不进行实际的键值对插入，而是通过递归调用其子节点插入，直至叶子结点进行实际的插入。
+
+涉及到的函数有：
+
+1. KeyNode* InnerNode::split()：分裂满了的节点
+2. int InnerNode::findIndex()：二分查找
+3. void InnerNode::insertNotFull()：节点不满直接插入，保持元素有序
+4. void FPTree::changeRoot(): 当根节点满时分裂，并产生新的根节点
 
 ## v3(5.12 - 5.18)
 
