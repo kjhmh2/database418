@@ -7,23 +7,37 @@
 ## v1(4.25 - 5.4)
 
 - 实现了PAllocator
+
 - 使用了LevelDB并进行简单的测试
+
 - 对应的文件为src文件夹下面的lycsb.cpp，p_allocator.cpp
 
-## v2(5.5 - 5.11)（待完成）
-
-- 重新修改了lycsb文件
-
-- 运行截图如下：
+- lycsb运行截图如下：
 
   ![lycsb](https://github.com/kjhmh2/database418/blob/v3/pic/lycsb.JPG)
 
+## v2(5.5 - 5.11)
 
 需要完成FPTreeDB插入和重载操作并通过相关测试，对应fptree.cpp的实现和fptree_test.cpp部分的运行
 
-## v3(5.12 - 5.18)（待完成）
+
+
+## v3(5.12 - 5.18)
 
 需要完成FPTreeDB查询和更新操作并通过相关测试，对应fptree.cpp的实现和fptree_test.cpp部分的运行
+
+1. 实现了FPTree有关查询相关的操作
+   - 对应的函数为Value InnerNode::find(Key k)
+   - 实现基本步骤：
+     1. 使用二分查找findIndex(k)查找目标子节点
+     2. 如果找不到，则返回MAX_VALUE
+     3. 如果能够找到，则对其孩子进行递归查询操作
+2. 实现了FPTree有关更新相关的操作
+   - 对应的函数为bool InnerNode::update(Key k, Value v)
+   - 实现基本步骤：
+     1. 使用二分查找findIndex(k)查找目标子节点
+     2. 如果找不到，返回false
+     3. 如果能够找到，则对其孩子进行递归更新操作
 
 ## v4(5.19 - 5.31)（待完成）
 
