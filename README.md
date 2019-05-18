@@ -16,7 +16,7 @@
 
 - 运行截图如下：
 
-  ![lycsb](http://github.com/kjhmh2/database418/raw/v2/pic/lycsb.png)
+  ![lycsb](http://github.com/kjhmh2/database418/raw/v3/pic/lycsb.png)
 
 
 需要完成FPTreeDB插入和重载操作并通过相关测试，对应fptree.cpp的实现和fptree_test.cpp部分的运行
