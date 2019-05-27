@@ -59,7 +59,8 @@ USER_HEADERS = ../include/*.h
 all : $(GTEST_LIBS) $(BIN) $(TESTS)
 
 clean :
-	rm -f $(GTEST_LIBS) $(TESTS) *.o ../data/*
+	rm -f $(GTEST_LIBS) $(TESTS) *.o ../data/* 
+	rm -r $(BIN)
 cleano :
 	rm -f $(GTEST_LIBS) *.o
 
