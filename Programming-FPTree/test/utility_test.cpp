@@ -114,7 +114,7 @@ TEST(PAllocatorTest, UseMultiplyLeaves) {
         p->getLeaf(leaf, pmem_addr);
         EXPECT_EQ(leaf.offset, offset);
         offset -= calLeafSize();
-        //PAllocator::getAllocator()->~PAllocator();
+        PAllocator::getAllocator()->~PAllocator();
         p = PAllocator::getAllocator();
     }
     removeFile();
@@ -162,3 +162,4 @@ TEST(UtilityTest, Clhash) {
     EXPECT_EQ(t_1, keyHash(100));
     EXPECT_NE(t_1, keyHash(200));
 }
+
