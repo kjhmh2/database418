@@ -59,8 +59,9 @@ PAllocator::PAllocator() {
 		this->startLeaf.fileId = 0;
 		this->startLeaf.offset = 0;
 
-		updateCatalog();
-		updateFreeList();
+		persistCatalog();
+		persistFreeList();
+		persistLeafGroup();
 		
 
     }
@@ -72,6 +73,12 @@ PAllocator::~PAllocator() {
 	persistCatalog();
 	persistFreeList();
 	persistLeafGroup();
+
+	pmem_unmap(this->catalogPmemAddr, CATALOG_SIZE);
+	pmem_unmap(this->freeListPmemAddr, FREE_LIST_SIZE);
+	for(int i = 1; i < this->maxFileId; i ++){
+		pmem_unmap(this->fId2PmAddr[i], LEAF_GROUP_SIZE);
+	}
 
 	PAllocator::pAllocator = nullptr;
 }
@@ -121,8 +128,9 @@ bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
 	}
 	this->freeNum --;
 
-	updateCatalog();
-	updateFreeList();
+	persistCatalog();
+	persistFreeList();
+	persistLeafGroup();
 
 	return true;
 	
@@ -178,29 +186,19 @@ bool PAllocator::freeLeaf(PPointer p) {
 		memcpy(this->fId2PmAddr[p.fileId] + sizeof(uint64_t) + (p.offset - LEAF_GROUP_HEAD)/LEAF_SIZE, &bitmap_temp, sizeof(Byte));
 		
 		this->freeNum ++;
-		updateCatalog();
-		updateFreeList();
+		persistCatalog();
+		persistFreeList();
+		persistLeafGroup();
 		return true;
 	}
     return false;
 }
 
-bool PAllocator::updateCatalog() {
+bool PAllocator::persistCatalog() {
 	memset(catalogPmemAddr, 0, CATALOG_SIZE);
 	memcpy(catalogPmemAddr, &this->maxFileId, sizeof(uint64_t));
 	memcpy(catalogPmemAddr + sizeof(uint64_t), &this->freeNum, sizeof(uint64_t));
 	memcpy(catalogPmemAddr + sizeof(uint64_t) + sizeof(uint64_t), (char *)&this->startLeaf, sizeof(PPointer));
-}
-
-bool PAllocator::updateFreeList() {
-	memset(freeListPmemAddr, 0, FREE_LIST_SIZE);
-	for(int i = 0; i < this->freeList.size(); i ++){
-		memcpy(freeListPmemAddr + sizeof(uint64_t) * 2 * i, &this->freeList[i].fileId, sizeof(uint64_t));
-		memcpy(freeListPmemAddr + sizeof(uint64_t) + sizeof(uint64_t) * 2 * i, &this->freeList[i].offset, sizeof(uint64_t));
-	}
-}
-
-bool PAllocator::persistCatalog() {
     // TODO
 	if(pmem_is_pmem(this->catalogPmemAddr, CATALOG_SIZE)){
 		pmem_persist(this->catalogPmemAddr, CATALOG_SIZE);
@@ -208,11 +206,15 @@ bool PAllocator::persistCatalog() {
 	else{
 		pmem_msync(this->catalogPmemAddr, CATALOG_SIZE);
 	}
-	pmem_unmap(this->catalogPmemAddr, CATALOG_SIZE);
     return true;
 }
 
 bool PAllocator::persistFreeList() {
+	memset(freeListPmemAddr, 0, FREE_LIST_SIZE);
+	for(int i = 0; i < this->freeList.size(); i ++){
+		memcpy(freeListPmemAddr + sizeof(uint64_t) * 2 * i, &this->freeList[i].fileId, sizeof(uint64_t));
+		memcpy(freeListPmemAddr + sizeof(uint64_t) + sizeof(uint64_t) * 2 * i, &this->freeList[i].offset, sizeof(uint64_t));
+	}
 
 	if(pmem_is_pmem(this->freeListPmemAddr, FREE_LIST_SIZE)){
 		pmem_persist(this->freeListPmemAddr, FREE_LIST_SIZE);
@@ -220,7 +222,6 @@ bool PAllocator::persistFreeList() {
 	else{
 		pmem_msync(this->freeListPmemAddr, FREE_LIST_SIZE);
 	}
-	pmem_unmap(this->freeListPmemAddr, FREE_LIST_SIZE);
     return true;
 }
 
@@ -232,7 +233,6 @@ bool PAllocator::persistLeafGroup() {
 		else{
 			pmem_msync(this->fId2PmAddr[i], LEAF_GROUP_SIZE);
 		}
-		pmem_unmap(this->fId2PmAddr[i], LEAF_GROUP_SIZE);
 	}
 }
 /*
@@ -267,7 +267,8 @@ bool PAllocator::newLeafGroup() {
 	this->maxFileId++;
 	this->freeNum += LEAF_GROUP_AMOUNT;
 	
-	updateCatalog();
-	updateFreeList();
+	persistCatalog();
+	persistFreeList();
+	persistLeafGroup();
 	return true;
 }

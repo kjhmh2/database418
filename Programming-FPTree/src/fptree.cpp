@@ -400,11 +400,11 @@ void LeafNode::insertNonFull(const Key& k, const Value& v) {
     // TODO
 	n ++;
 	int index = findFirstZero();
-	bitmap[index / 8] |= 1 << index % 8;
+	bitmap[index / 8] |= (1 << (index % 8));
 	fingerprints[index] = keyHash(k);
 	kv[index] = {k, v};
 
-	updatePmem();
+	persist();
 }
 
 // split the leaf node
@@ -445,7 +445,7 @@ KeyNode* LeafNode::split() {
 	}
 	memcpy(dynamic_cast<LeafNode *>(newChild->node)->fingerprints, (char *)fingerprints + sizeof(Byte) * (n / 2), dynamic_cast<LeafNode *>(newChild->node)->n * sizeof(Byte));
 	memcpy(dynamic_cast<LeafNode *>(newChild->node)->kv, (char *)kv + sizeof(KeyValue) * (n / 2), dynamic_cast<LeafNode *>(newChild->node)->n * sizeof(KeyValue));
-	dynamic_cast<LeafNode *>(newChild->node)->updatePmem();
+	dynamic_cast<LeafNode *>(newChild->node)->persist();
 
 	n = n / 2;
 	next = dynamic_cast<LeafNode *>(newChild->node);
@@ -462,7 +462,7 @@ KeyNode* LeafNode::split() {
 	}
 	memset(fingerprints + sizeof(Byte) * n, 0, sizeof(Byte) * (2 * LEAF_DEGREE - n));
 	memset(kv + sizeof(KeyValue) * n, 0, sizeof(KeyValue) * (2 * LEAF_DEGREE - n));
-	updatePmem();
+	persist();
 
 	newChild->key = dynamic_cast<LeafNode *>(newChild->node)->kv[0].k;
     return newChild;
@@ -515,7 +515,7 @@ bool LeafNode::update(const Key& k, const Value& v) {
 			if((bitmap[i] >> j) & 1){
 				if(k == kv[j + i * 8].k){
 					kv[j + i * 8].v = v;
-					updatePmem();
+					persist();
 					ifUpdate = true;
 					return ifUpdate;
 				}
@@ -553,16 +553,13 @@ int LeafNode::findFirstZero() {
     return -1;
 }
 
-void LeafNode::updatePmem() {
+// persist the entire leaf
+// use PMDK
+void LeafNode::persist() {
 	memcpy(pmem_addr, bitmap, bitmapSize * sizeof(Byte));
 	memcpy(pmem_addr + bitmapSize * sizeof(Byte), &pNext, sizeof(PPointer));
 	memcpy(pmem_addr + bitmapSize * sizeof(Byte) + sizeof(PPointer), fingerprints, 2 * LEAF_DEGREE * sizeof(Byte));
 	memcpy(pmem_addr + bitmapSize * sizeof(Byte) + sizeof(PPointer) + 2 * LEAF_DEGREE * sizeof(Byte), kv, 2 * LEAF_DEGREE * (sizeof(Key) + sizeof(Value)));
-}
-
-// persist the entire leaf
-// use PMDK
-void LeafNode::persist() {
     // TODO
 	if(pmem_is_pmem(this->pmem_addr, LEAF_SIZE)){
 		pmem_persist(this->pmem_addr, LEAF_SIZE);
