@@ -135,6 +135,29 @@ TEST(FPTreeTest, PersistLeaf) {
 
     removeFile();
 }
+
+TEST(FPTreeTest, BulkLoadingOneLeafGroup_temp) {
+    FPTree *tree = new FPTree(2);
+    for (int i = 1; i <= LEAF_DEGREE * 7; i++) {
+        tree->insert(i, i * 10);
+    }
+
+	for (int i = 1; i <= LEAF_DEGREE * 7; i++) {
+        EXPECT_EQ(tree->find(i), i * 10);
+    }
+	cout << "tree" << tree->getRoot()->getKeyNum() << endl;
+
+    PAllocator::getAllocator()->~PAllocator();
+    delete tree;
+    FPTree *t_tree = new FPTree(2);
+    for (int i = 1; i <= LEAF_DEGREE * 7; i++) {
+        EXPECT_EQ(t_tree->find(i), i * 10);
+    }
+	InnerNode *node = (InnerNode*)(t_tree->getRoot()->getChild(1));
+	//LeafNode *leaf = (LeafNode*)(node->getChild(1));
+	cout << "tree " << t_tree->getRoot()->getKeyNum() << ' ' << node->getKeyNum() << endl;
+    removeFile();
+}
 /*
 TEST(FPTreeTest, BulkLoadingOneLeafGroup) {
     FPTree *tree = new FPTree(32);
