@@ -272,3 +272,7 @@ bool PAllocator::newLeafGroup() {
 	persistLeafGroup();
 	return true;
 }
+void PAllocator::setStartLeafPointer(const PPointer p1){
+    this->startLeaf = p1;
+    updateCatalog();
+}
