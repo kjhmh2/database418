@@ -108,12 +108,12 @@ bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
 
 	uint64_t usedNum_temp;
 	Byte bitmap_temp;
-	memcpy((char *)&usedNum_temp, this->fId2PmAddr[p.fileId], sizeof(uint64_t));
+	memcpy(&usedNum_temp, this->fId2PmAddr[p.fileId], sizeof(uint64_t));
 	usedNum_temp ++;
 	bitmap_temp = 1;
-	memcpy(this->fId2PmAddr[p.fileId], (char *)&usedNum_temp, sizeof(uint64_t));
-	memcpy(this->fId2PmAddr[p.fileId] + sizeof(uint64_t) + (p.offset - LEAF_GROUP_HEAD)/LEAF_SIZE, (char *)&bitmap_temp, sizeof(Byte));
-	
+	memcpy(this->fId2PmAddr[p.fileId], &usedNum_temp, sizeof(uint64_t));
+	memcpy(this->fId2PmAddr[p.fileId] + sizeof(uint64_t) + (p.offset - LEAF_GROUP_HEAD)/LEAF_SIZE, &bitmap_temp, sizeof(Byte));
+
 	pmem_addr = this->fId2PmAddr[p.fileId] + p.offset;
 
 	if(this->startLeaf.fileId == 0){
@@ -132,7 +132,7 @@ bool PAllocator::ifLeafUsed(PPointer p) {
     // TODO
 	if(ifLeafExist(p)){
 		Byte ifUsed;
-		memcpy((char *)&ifUsed, this->fId2PmAddr[p.fileId] + sizeof(uint64_t) + (p.offset - LEAF_GROUP_HEAD)/LEAF_SIZE, sizeof(Byte));
+		memcpy(&ifUsed, this->fId2PmAddr[p.fileId] + sizeof(uint64_t) + (p.offset - LEAF_GROUP_HEAD)/LEAF_SIZE, sizeof(Byte));
 		return (ifUsed == 1 ? true : false);
 			
 	}
@@ -143,7 +143,7 @@ bool PAllocator::ifLeafFree(PPointer p) {
     // TODO
     if(ifLeafExist(p)){
 		Byte ifUsed;
-		memcpy((char *)&ifUsed, this->fId2PmAddr[p.fileId] + sizeof(uint64_t) + (p.offset - LEAF_GROUP_HEAD)/LEAF_SIZE, sizeof(Byte));
+		memcpy(&ifUsed, this->fId2PmAddr[p.fileId] + sizeof(uint64_t) + (p.offset - LEAF_GROUP_HEAD)/LEAF_SIZE, sizeof(Byte));
 		return (ifUsed == 1 ? false : true);
 			
 	}
@@ -171,11 +171,11 @@ bool PAllocator::freeLeaf(PPointer p) {
 
 		uint64_t usedNum_temp;
 		Byte bitmap_temp;
-		memcpy((char *)&usedNum_temp, this->fId2PmAddr[p.fileId], sizeof(uint64_t));
+		memcpy(&usedNum_temp, this->fId2PmAddr[p.fileId], sizeof(uint64_t));
 		usedNum_temp --;
 		bitmap_temp = 0;
-		memcpy(this->fId2PmAddr[p.fileId], (char *)&usedNum_temp, sizeof(uint64_t));
-		memcpy(this->fId2PmAddr[p.fileId] + sizeof(uint64_t) + (p.offset - LEAF_GROUP_HEAD)/LEAF_SIZE, (char *)&bitmap_temp, sizeof(Byte));
+		memcpy(this->fId2PmAddr[p.fileId], &usedNum_temp, sizeof(uint64_t));
+		memcpy(this->fId2PmAddr[p.fileId] + sizeof(uint64_t) + (p.offset - LEAF_GROUP_HEAD)/LEAF_SIZE, &bitmap_temp, sizeof(Byte));
 		
 		this->freeNum ++;
 		updateCatalog();
@@ -187,16 +187,16 @@ bool PAllocator::freeLeaf(PPointer p) {
 
 bool PAllocator::updateCatalog() {
 	memset(catalogPmemAddr, 0, CATALOG_SIZE);
-	memcpy(catalogPmemAddr, (char *)&this->maxFileId, sizeof(uint64_t));
-	memcpy(catalogPmemAddr + sizeof(uint64_t), (char *)&this->freeNum, sizeof(uint64_t));
+	memcpy(catalogPmemAddr, &this->maxFileId, sizeof(uint64_t));
+	memcpy(catalogPmemAddr + sizeof(uint64_t), &this->freeNum, sizeof(uint64_t));
 	memcpy(catalogPmemAddr + sizeof(uint64_t) + sizeof(uint64_t), (char *)&this->startLeaf, sizeof(PPointer));
 }
 
 bool PAllocator::updateFreeList() {
 	memset(freeListPmemAddr, 0, FREE_LIST_SIZE);
 	for(int i = 0; i < this->freeList.size(); i ++){
-		memcpy(freeListPmemAddr + sizeof(uint64_t) * 2 * i, (char *)&this->freeList[i].fileId, sizeof(uint64_t));
-		memcpy(freeListPmemAddr + sizeof(uint64_t) + sizeof(uint64_t) * 2 * i, (char *)&this->freeList[i].offset, sizeof(uint64_t));
+		memcpy(freeListPmemAddr + sizeof(uint64_t) * 2 * i, &this->freeList[i].fileId, sizeof(uint64_t));
+		memcpy(freeListPmemAddr + sizeof(uint64_t) + sizeof(uint64_t) * 2 * i, &this->freeList[i].offset, sizeof(uint64_t));
 	}
 }
 
@@ -251,7 +251,7 @@ bool PAllocator::newLeafGroup() {
 
 	uint64_t usedNum_temp = 0;
 	memset(fId2PmAddr_temp, 0, LEAF_GROUP_SIZE);
-	memcpy(fId2PmAddr_temp, (char *)&usedNum_temp, sizeof(uint64_t));
+	memcpy(fId2PmAddr_temp, &usedNum_temp, sizeof(uint64_t));
 
 	if(!fId2PmAddr_temp){
     	return false;
