@@ -19,7 +19,7 @@ void removeFile() {
 }
 
 TEST(FPTreeTest, ReadLeaf) {
-    
+
 }
 
 TEST(FPTreeTest, SingleInsert) {
@@ -101,7 +101,7 @@ TEST(FPTreeTest, BulkLoadingTwoLeaf) {
     }
 
     EXPECT_EQ(pa->getFreeNum(), LEAF_GROUP_AMOUNT - 2);
-	
+
 	for (int i = 1; i <= LEAF_DEGREE * 2; i++) {
         EXPECT_EQ(tree1->find(i), i * 100);
     }
@@ -138,11 +138,11 @@ TEST(FPTreeTest, PersistLeaf) {
 
 TEST(FPTreeTest, BulkLoadingOneLeafGroup_temp) {
     FPTree *tree = new FPTree(2);
-    for (int i = 1; i <= LEAF_DEGREE * 7; i++) {
+    for (int i = 1; i <= LEAF_DEGREE * 6; i++) {
         tree->insert(i, i * 10);
     }
 
-	for (int i = 1; i <= LEAF_DEGREE * 7; i++) {
+	for (int i = 1; i <= LEAF_DEGREE * 6; i++) {
         EXPECT_EQ(tree->find(i), i * 10);
     }
 	cout << "tree" << tree->getRoot()->getKeyNum() << endl;
@@ -150,7 +150,7 @@ TEST(FPTreeTest, BulkLoadingOneLeafGroup_temp) {
     PAllocator::getAllocator()->~PAllocator();
     delete tree;
     FPTree *t_tree = new FPTree(2);
-    for (int i = 1; i <= LEAF_DEGREE * 7; i++) {
+    for (int i = 1; i <= LEAF_DEGREE * 6; i++) {
         EXPECT_EQ(t_tree->find(i), i * 10);
     }
 	InnerNode *node = (InnerNode*)(t_tree->getRoot()->getChild(1));
@@ -213,7 +213,7 @@ TEST(FPTreeTest, RemoveMultiplyEntries) {
     p.offset = LEAF_GROUP_HEAD + calLeafSize() * (LEAF_GROUP_AMOUNT - 2);
     EXPECT_EQ(pa->ifLeafUsed(p), true);
     EXPECT_EQ(pa->ifLeafFree(p), false);
-    
+
     // remove 3 leaves
     for (int j = 0; j < LEAF_DEGREE * 3; j++, i++) {
         tree->remove(i);
