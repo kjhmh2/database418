@@ -53,4 +53,5 @@ public:
     PPointer getStartPointer() { return this->startLeaf; }
     uint64_t getMaxFileId() { return this->maxFileId; }
     uint64_t getFreeNum()   { return this->freeNum; }
+    void setStartLeafPointer(const PPointer p1);
 };
