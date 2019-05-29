@@ -18,7 +18,7 @@ class LeafNode;
 class Node {
 protected:
     friend class FPTree;
-    
+
     FPTree* tree;     // the tree that the node belongs to
     int     degree;   // the degree of the node
     bool    isLeaf;   // judge whether the node is leaf
@@ -52,7 +52,7 @@ typedef struct t_NodeLevel {
     int level;
 } NodeLevel;
 
-// 
+//
 typedef struct t_KeyValue {
     Key k;
     Value v;
@@ -77,14 +77,14 @@ private:
     int findIndex(const Key& k);
 
     void getBrother(const int& index, InnerNode* const& parent, InnerNode* &leftBro, InnerNode* &rightBro);
-    void redistributeRight(const int& index, InnerNode* & rightBro, InnerNode* const& parent);
+    void redistributeRight(const int& index, InnerNode* const& rightBro, InnerNode* const& parent);
     void redistributeLeft(const int& index, InnerNode* const& leftBro, InnerNode* const& parent);
 
     void mergeParentRight(InnerNode* const& parent, InnerNode* const& rightBro);
     void mergeParentLeft(InnerNode* const& parent, InnerNode* const& leftBro);
 
     void mergeLeft(InnerNode* const& LeftBro, const Key& k);
-    void mergeRight(InnerNode* & rightBro, const Key& k);
+    void mergeRight(InnerNode* const& rightBro, const Key& k);
 public:
 
     InnerNode(const int& d, FPTree* const& tree, bool _ifRoot = false);
@@ -96,7 +96,7 @@ public:
     bool     remove(const Key& k, const int& index, InnerNode* const& parent, bool &ifDelete);
     bool     update(const Key& k, const Value& v);
     Value    find(const Key& k);
-    
+
     KeyNode *split();
     void     removeChild(const int& KeyIdx, const int& childIdx);
 
@@ -110,7 +110,7 @@ public:
 
 /*
 -------------------------------------------------------------
-| bitmap | pNext | fingerprints | KV = [(k1,v1),...(kn,vn)] | 
+| bitmap | pNext | fingerprints | KV = [(k1,v1),...(kn,vn)] |
 -------------------------------------------------------------
 */
 // LeafNode structure is the leaf node in NVM that is buffered in the DRAM.
@@ -131,11 +131,11 @@ private:
 
     // the DRAM relative variables
     int        n;              // amount of entries
-    LeafNode*  prev;           // the address of previous leafnode      
-    LeafNode*  next;           // the address of next leafnode  
+    LeafNode*  prev;           // the address of previous leafnode
+    LeafNode*  next;           // the address of next leafnode
     PPointer   pPointer;        // the persistent pointer pointed to the leaf in NVM
     string     filePath;        // the file path of the leaf
-    
+
     uint64_t   bitmapSize;      // the bitmap size of the leaf(bytes)
 
 public:
