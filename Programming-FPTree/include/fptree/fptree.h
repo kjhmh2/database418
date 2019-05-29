@@ -77,14 +77,14 @@ private:
     int findIndex(const Key& k);
 
     void getBrother(const int& index, InnerNode* const& parent, InnerNode* &leftBro, InnerNode* &rightBro);
-    void redistributeRight(const int& index, InnerNode* const& rightBro, InnerNode* const& parent);
+    void redistributeRight(const int& index, InnerNode* & rightBro, InnerNode* const& parent);
     void redistributeLeft(const int& index, InnerNode* const& leftBro, InnerNode* const& parent);
 
     void mergeParentRight(InnerNode* const& parent, InnerNode* const& rightBro);
     void mergeParentLeft(InnerNode* const& parent, InnerNode* const& leftBro);
 
     void mergeLeft(InnerNode* const& LeftBro, const Key& k);
-    void mergeRight(InnerNode* const& rightBro, const Key& k);
+    void mergeRight(InnerNode* & rightBro, const Key& k);
 public:
 
     InnerNode(const int& d, FPTree* const& tree, bool _ifRoot = false);
