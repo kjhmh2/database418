@@ -38,12 +38,14 @@ PAllocator::PAllocator() {
 		allocatorCatalog.read((char*)&this->maxFileId, sizeof(uint64_t));
 		allocatorCatalog.read((char*)&this->freeNum, sizeof(uint64_t));
 		allocatorCatalog.read((char *)&this->startLeaf, sizeof(PPointer));
-        for(int i = 0; i < this->freeNum; i ++) {
+        for(uint64_t i = 0; i < this->freeNum; i ++) {
 			PPointer temp;
 			freeListFile.read((char*)&temp.fileId, sizeof(uint64_t));
 			freeListFile.read((char*)&temp.offset, sizeof(uint64_t));
 			this->freeList.emplace_back(temp);
 		}
+		persistCatalog();
+		persistFreeList();
     } else {
         // not exist, create catalog and free_list file, then open.
         // TODO
@@ -58,36 +60,37 @@ PAllocator::PAllocator() {
 		this->freeNum = 0;
 		this->startLeaf.fileId = 0;
 		this->startLeaf.offset = 0;
-
+		
 		persistCatalog();
 		persistFreeList();
-		persistLeafGroup();
-		
-
     }
     this->initFilePmemAddr();
+	persistLeafGroup();
+	cout << "PAllocator(): " << freeNum << ' ' << freeList.size() << endl;
 }
 
 PAllocator::~PAllocator() {
     // TODO
+	cout << "before ~PAllocator(): " << freeNum << ' ' << freeList.size() << endl;
 	persistCatalog();
 	persistFreeList();
 	persistLeafGroup();
 
 	pmem_unmap(this->catalogPmemAddr, CATALOG_SIZE);
 	pmem_unmap(this->freeListPmemAddr, FREE_LIST_SIZE);
-	for(int i = 1; i < this->maxFileId; i ++){
+	for(uint64_t i = 1; i < this->maxFileId; i ++){
 		pmem_unmap(this->fId2PmAddr[i], LEAF_GROUP_SIZE);
 	}
 
 	PAllocator::pAllocator = nullptr;
+	cout << "after ~PAllocator(): " << freeNum << ' ' << freeList.size() << endl;
 }
 
 // memory map all leaves to pmem address, storing them in the fId2PmAddr
 void PAllocator::initFilePmemAddr() {
     // TODO
     this->fId2PmAddr.clear();
-    for(int i = 1; i < getMaxFileId(); i ++) {
+    for(uint64_t i = 1; i < getMaxFileId(); i ++) {
         string path;
         path = DATA_DIR + to_string(i);
         this->fId2PmAddr.emplace(i, (char *)pmem_map_file(path.c_str(), LEAF_GROUP_SIZE, PMEM_FILE_CREATE, 0666, NULL, NULL));
@@ -103,6 +106,7 @@ char* PAllocator::getLeafPmemAddr(PPointer p) {
 // get and use a leaf for the fptree leaf allocation
 // return 
 bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
+	cout << "before getLeaf(): " << freeNum << ' ' << freeList.size() << endl;
     // TODO
 	if(this->freeNum == 0){
 		if(newLeafGroup() == false){
@@ -112,6 +116,7 @@ bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
 
 	p = this->freeList.back();
 	this->freeList.pop_back();
+	this->freeNum --;
 
 	uint64_t usedNum_temp;
 	Byte bitmap_temp;
@@ -126,14 +131,12 @@ bool PAllocator::getLeaf(PPointer &p, char* &pmem_addr) {
 	if(this->startLeaf.fileId == 0){
 		this->startLeaf = p;
 	}
-	this->freeNum --;
-
+	
 	persistCatalog();
 	persistFreeList();
 	persistLeafGroup();
-
+	cout << "after getLeaf(): " << freeNum << ' ' << freeList.size() << endl;
 	return true;
-	
 }
 
 bool PAllocator::ifLeafUsed(PPointer p) {
@@ -172,10 +175,12 @@ bool PAllocator::ifLeafExist(PPointer p) {
 
 // free and reuse a leaf
 bool PAllocator::freeLeaf(PPointer p) {
+	cout << "before freeLeaf(): " << freeNum << ' ' << freeList.size() << endl;
     // TODO
 	if(ifLeafUsed(p)){
 		PPointer freeLeaf_temp{p.fileId, p.offset};
 		this->freeList.emplace_back(freeLeaf_temp);
+		this->freeNum ++;
 
 		uint64_t usedNum_temp;
 		Byte bitmap_temp;
@@ -185,10 +190,10 @@ bool PAllocator::freeLeaf(PPointer p) {
 		memcpy(this->fId2PmAddr[p.fileId], &usedNum_temp, sizeof(uint64_t));
 		memcpy(this->fId2PmAddr[p.fileId] + sizeof(uint64_t) + (p.offset - LEAF_GROUP_HEAD)/LEAF_SIZE, &bitmap_temp, sizeof(Byte));
 		
-		this->freeNum ++;
 		persistCatalog();
 		persistFreeList();
 		persistLeafGroup();
+		cout << "after freeLeaf(): " << freeNum << ' ' << freeList.size() << endl;
 		return true;
 	}
     return false;
@@ -210,8 +215,9 @@ bool PAllocator::persistCatalog() {
 }
 
 bool PAllocator::persistFreeList() {
+	cout << "before persistFreeList(): " << freeNum << ' ' << freeList.size() << endl;
 	memset(freeListPmemAddr, 0, FREE_LIST_SIZE);
-	for(int i = 0; i < this->freeList.size(); i ++){
+	for(uint64_t i = 0; i < this->freeList.size(); i ++){
 		memcpy(freeListPmemAddr + sizeof(uint64_t) * 2 * i, &this->freeList[i].fileId, sizeof(uint64_t));
 		memcpy(freeListPmemAddr + sizeof(uint64_t) + sizeof(uint64_t) * 2 * i, &this->freeList[i].offset, sizeof(uint64_t));
 	}
@@ -222,11 +228,12 @@ bool PAllocator::persistFreeList() {
 	else{
 		pmem_msync(this->freeListPmemAddr, FREE_LIST_SIZE);
 	}
+	cout << "after persistFreeList(): " << freeNum << ' ' << freeList.size() << endl;
     return true;
 }
 
 bool PAllocator::persistLeafGroup() {
-	for(int i = 1; i < this->maxFileId; i ++){
+	for(uint64_t i = 1; i < this->maxFileId; i ++){
 		if(pmem_is_pmem(this->fId2PmAddr[i], LEAF_GROUP_SIZE)){
 			pmem_persist(this->fId2PmAddr[i], LEAF_GROUP_SIZE);
 		}
@@ -234,6 +241,7 @@ bool PAllocator::persistLeafGroup() {
 			pmem_msync(this->fId2PmAddr[i], LEAF_GROUP_SIZE);
 		}
 	}
+	return true;
 }
 /*
   Leaf group structure: (uncompressed)
@@ -241,6 +249,7 @@ bool PAllocator::persistLeafGroup() {
 */
 // create a new leafgroup, one file per leafgroup
 bool PAllocator::newLeafGroup() {
+	cout << "before newLeafGroup(): " << freeNum << ' ' << freeList.size() << endl;
     // TODO
 	string path;
 	path = DATA_DIR + to_string(this->maxFileId);
@@ -248,14 +257,14 @@ bool PAllocator::newLeafGroup() {
 	fclose(f);
 
 	char *fId2PmAddr_temp = (char *)pmem_map_file(path.c_str(), LEAF_GROUP_SIZE, PMEM_FILE_CREATE, 0666, NULL, NULL);
+	if(!fId2PmAddr_temp){
+    	return false;
+	}
 
 	uint64_t usedNum_temp = 0;
 	memset(fId2PmAddr_temp, 0, LEAF_GROUP_SIZE);
 	memcpy(fId2PmAddr_temp, &usedNum_temp, sizeof(uint64_t));
 
-	if(!fId2PmAddr_temp){
-    	return false;
-	}
 	this->fId2PmAddr.emplace(this->maxFileId, fId2PmAddr_temp);
 
 	
@@ -270,5 +279,6 @@ bool PAllocator::newLeafGroup() {
 	persistCatalog();
 	persistFreeList();
 	persistLeafGroup();
+	cout << "after newLeafGroup(): " << freeNum << ' ' << freeList.size() << endl;
 	return true;
 }
