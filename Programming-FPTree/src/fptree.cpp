@@ -191,14 +191,90 @@ KeyNode* InnerNode::split() {
 // return TRUE if the children node is deleted after removement.
 // the InnerNode need to be redistributed or merged after deleting one of its children node.
 bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent, bool &ifDelete) {
-    bool ifRemove = false;
+bool ifRemove = false;
     int keyIndex = this->findIndex(k);
+    ifRemove = childrens[keyIndex]->remove(k, keyIndex, this, ifDelete);
+    //child node is deleted
+    if(ifDelete == true){
+        this->removeChild(keyIndex, keyIndex);
+        // only have one leaf
+        // TODO
+        if(this->isRoot == true && this->nChild == 1 && this->childrens[0]->ifLeaf() == true){
+            this->tree->root = (InnerNode*)childrens[0];
+            this->tree->root->isRoot = true;
+            ifDelete = true;
+            return ifRemove;
+        }
+        // recursive remove
+        // TODO
 
-    // only have one leaf
-    // TODO
+        //entries not enough
+        if(this->nChild < degree + 1 && this->isRoot == false){
+            InnerNode* leftBro;
+            InnerNode* rightBro;
+            this->getBrother(index, parent, leftBro, rightBro);
 
-    // recursive remove
-    // TODO
+            //Case 2: redistributed with left brother
+            if(leftBro != NULL && leftBro->nChild > this->degree + 1){
+                redistributeLeft(index, leftBro, parent);
+                ifDelete = false;
+                return ifRemove;
+            }
+            //Case 3: redistributed with right brother
+            if(rightBro != NULL && rightBro->nChild > this->degree + 1){
+                redistributeLeft(index, rightBro, parent);
+                ifDelete = false;
+                return ifRemove;
+            }
+            //Case 4:merge with left brother
+            if(leftBro != NULL){
+                mergeLeft(leftBro, k);
+                for(int i = index; i < parent->nChild - 1; i ++){
+                    parent->childrens[i] = parent->childrens[i + 1];
+                }
+                for(int i = index - 1; i < parent->nKeys - 1; i ++){
+                    parent->keys[i] = parent->keys[i + 1];
+                }
+                parent->nChild --;
+                parent->nKeys --;
+                ifDelete = true;
+                return ifRemove;
+            }
+            //Case 5:merge with right brother
+            if(rightBro != NULL){
+                mergeRight(rightBro, k);
+                for(int i = index; i < parent->nChild - 1; i ++){
+                    parent->childrens[i] = parent->childrens[i + 1];
+                }
+                for(int i = index; i < parent->nKeys - 1; i ++){
+                    parent->keys[i] = parent->keys[i + 1];
+                }
+                parent->nChild --;
+                parent->nKeys --;
+                ifDelete = true;
+                return ifRemove;
+            }
+            //Case 6: parent only has two children and is root
+            if(parent->isRoot == true && parent->nChild == 2){
+                //merge left
+                if(leftBro != NULL){
+                    mergeParentLeft(parent, leftBro);
+                    ifDelete = true;
+                }
+                //merge right
+                else if(rightBro != NULL){
+                    mergeParentRight(parent, rightBro);
+                    ifDelete = true;
+                }
+                return ifRemove;
+            }
+            return false;
+        }
+        ifDelete = false;
+        return ifRemove;
+    }
+    //child node is not deleted
+
     return ifRemove;
 }
 
