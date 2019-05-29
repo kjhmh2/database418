@@ -22,7 +22,7 @@ private:
     uint64_t             maxFileId;     // current fileId not used
     uint64_t             freeNum;       // free leaves amount
     vector<PPointer>     freeList;      // leaves list: the leaf that has been allocatored but is free
-    
+
 	char *catalogPmemAddr;
 	char *freeListPmemAddr;
 	map<uint64_t, char*> fId2PmAddr;    // the map of fileId to pmem address
@@ -41,7 +41,7 @@ public:
     bool     ifLeafUsed(PPointer p);   // judge whether the leaf is used
     bool     ifLeafFree(PPointer p);   // judge whether the leaf is free
     bool     ifLeafExist(PPointer p);  // judge whether the leaf exists
-    
+
 	bool	 updateCatalog();
 	bool	 updateFreeList();
     bool     persistCatalog();         // persist the catalog file in NVM/SSD
@@ -53,4 +53,5 @@ public:
     PPointer getStartPointer() { return this->startLeaf; }
     uint64_t getMaxFileId() { return this->maxFileId; }
     uint64_t getFreeNum()   { return this->freeNum; }
+    void setStartLeafPointer(const PPointer p1);
 };
