@@ -136,33 +136,6 @@ TEST(FPTreeTest, PersistLeaf) {
     removeFile();
 }
 
-TEST(FPTreeTest, BulkLoadingOneLeafGroup_temp) {
-    FPTree *tree = new FPTree(2);
-    for (int i = 1; i <= LEAF_DEGREE * 6; i++) {
-        tree->insert(i, i * 1);
-    }
-
-	cout << "tree_root " << tree->getRoot()->getKeyNum() << endl;
-	//cout << dynamic_cast<LeafNode *>(dynamic_cast<InnerNode *>(tree->getRoot()->getChild(2))->getChild(3))->getValue(0) << endl;
-
-	for (int i = 1; i <= LEAF_DEGREE * 6; i++) {
-        EXPECT_EQ(tree->find(i), i * 1);
-    }
-	
-    PAllocator::getAllocator()->~PAllocator();
-    delete tree;
-	/*
-    FPTree *t_tree = new FPTree(2);
-	cout << "t_tree_root " << t_tree->getRoot()->getKeyNum() << endl;
-    for (int i = 1; i <= LEAF_DEGREE * 6; i++) {
-        EXPECT_EQ(t_tree->find(i), i * 1);
-    }
-	InnerNode *node = (InnerNode*)(t_tree->getRoot()->getChild(0));
-	//LeafNode *leaf = (LeafNode*)(node->getChild(0));
-	*/
-    removeFile();
-}
-/*
 TEST(FPTreeTest, BulkLoadingOneLeafGroup) {
     FPTree *tree = new FPTree(32);
     for (int i = 1; i < LEAF_DEGREE * 10; i++) {
@@ -269,4 +242,3 @@ TEST(InnerNodeTest, MergeTest) {
     EXPECT_EQ(tree->getRoot()->getChildNum(), 4);
     removeFile();
 }
-*/

@@ -25,13 +25,13 @@ InnerNode::~InnerNode() {
 // binary search the first key in the innernode larger than input key
 int InnerNode::findIndex(const Key& k) {
     // TODO
+	if(nChild == 0){
+		return -1;
+	}
 	for(int i = 0; i < nKeys; i ++) {
 		if(keys[i] > k)
 			return i;
 	}
-	/*if(nChild == 0){
-		return -1;
-	}*/
     return nKeys;
 }
 
@@ -82,7 +82,6 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
 			insertNonFull(newChild->key, newChild->node);
 			newChild = split();
 			if(this->isRoot == true){
-				cout << "InnerNode split to root" << endl;
 				InnerNode *newRoot = new InnerNode(degree, tree, true);
 				newRoot->childrens[newRoot->nChild] = this;
 				newRoot->nChild ++;
@@ -169,24 +168,24 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
 }
 
 KeyNode* InnerNode::split() {
-	cout << "InnerNode split() " << endl;
     KeyNode* newChild = new KeyNode();
+	InnerNode *innerNode = new InnerNode(degree, tree, false);
     // right half entries of old node to the new node, others to the old node. 
     // TODO
-	newChild->node = new InnerNode(degree, tree, false);
-	dynamic_cast<InnerNode *>(newChild->node)->nKeys = nKeys / 2;
-	dynamic_cast<InnerNode *>(newChild->node)->nChild = dynamic_cast<InnerNode *>(newChild->node)->nKeys + 1;
-	memcpy(dynamic_cast<InnerNode *>(newChild->node)->keys, keys + (nKeys / 2) + 1, sizeof(Key) * dynamic_cast<InnerNode *>(newChild->node)->nKeys);
-	memcpy(dynamic_cast<InnerNode *>(newChild->node)->childrens, childrens + (nKeys / 2) + 1, sizeof(Node *) * dynamic_cast<InnerNode *>(newChild->node)->nChild);
+	newChild->node = innerNode;
+	innerNode->nKeys = degree;
+	innerNode->nChild = degree + 1;
+	memcpy(innerNode->keys, keys + degree + 1, sizeof(Key) * degree);
+	memcpy(innerNode->childrens, childrens + degree + 1, sizeof(Node *) * (degree + 1));
 	
 	
-	nKeys = (nKeys - 1) / 2;
-	nChild = nKeys + 1;
+	nKeys = degree;
+	nChild = degree + 1;
 
 	newChild->key = keys[nKeys];
 
-	memset(keys + sizeof(Key) * nKeys, 0, sizeof(Key) * (2 * degree + 1 - nKeys));
-	memset(childrens + sizeof(Node *) * nChild, 0, sizeof(Node *) * (2 * degree + 2 - nChild));
+	memset(keys +  nKeys, 0, sizeof(Key) * (degree + 1));
+	memset(childrens +  nChild, 0, sizeof(Node *) * (degree + 1));
 	
     return newChild;
 }
@@ -263,7 +262,7 @@ Value InnerNode::find(const Key& k) {
     // TODO
 	if(!this->isLeaf){
 		int index = findIndex(k);
-		if(nChild <= index){
+		if(index < 0 || index >= nChild){
 			return MAX_VALUE;
 		}
 		else{
@@ -334,15 +333,7 @@ LeafNode::LeafNode(FPTree* t) {
 	memset(bitmap, 0, bitmapSize * sizeof(Byte));
 	memset(fingerprints, 0, 2 * LEAF_DEGREE * sizeof(Byte));
 	memset(kv, 0, 2 * LEAF_DEGREE * sizeof(KeyValue));
-/*
-	bitmap = reinterpret_cast<Byte *>(pmem_addr);
-	pNext = reinterpret_cast<PPointer *>(pmem_addr + bitmapSize * sizeof(Byte));
-	fingerprints = reinterpret_cast<Byte *>(pmem_addr + bitmapSize * sizeof(Byte) + sizeof(PPointer));
-	kv = reinterpret_cast<KeyValue *>(pmem_addr + bitmapSize * sizeof(Byte) + sizeof(PPointer) +  2 * LEAF_DEGREE * sizeof(Byte));
 
-	PPointer pNext_temp = {0, 0};
-	memcpy(pNext, &pNext_temp, sizeof(PPointer));
-*/
 }
 
 // reload the leaf with the specific Persistent Pointer
@@ -367,12 +358,7 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
 	memcpy(&pNext, pmem_addr + bitmapSize * sizeof(Byte), sizeof(PPointer));
 	memcpy(fingerprints, pmem_addr + bitmapSize * sizeof(Byte) + sizeof(PPointer), 2 * LEAF_DEGREE * sizeof(Byte));
 	memcpy(kv, pmem_addr + bitmapSize * sizeof(Byte) + sizeof(PPointer) + 2 * LEAF_DEGREE * sizeof(Byte), 2 * LEAF_DEGREE * (sizeof(Key) + sizeof(Value)));
-/*
-	bitmap = reinterpret_cast<Byte *>(pmem_addr);
-	pNext = reinterpret_cast<PPointer *>(pmem_addr + bitmapSize * sizeof(Byte));
-	fingerprints = reinterpret_cast<Byte *>(pmem_addr + bitmapSize * sizeof(Byte) + sizeof(PPointer));
-	kv = reinterpret_cast<KeyValue *>(pmem_addr + bitmapSize * sizeof(Byte) + sizeof(PPointer) +  2 * LEAF_DEGREE * sizeof(Byte));
-*/
+
 	for(uint64_t i = 0; i < bitmapSize; i ++){
 		n += countOneBits(bitmap[i]);
 	}
@@ -393,7 +379,7 @@ KeyNode* LeafNode::insert(const Key& k, const Value& v) {
 	if(update(k, v)){
 		return newChild;
 	}
-	if(n >= 2 * degree - 1){
+	if(n >= 2 * LEAF_DEGREE - 1){
 		insertNonFull(k, v);
 		newChild = split();
 	}
@@ -419,11 +405,10 @@ void LeafNode::insertNonFull(const Key& k, const Value& v) {
 
 
 KeyNode* LeafNode::split() {
-	cout << "LeafNode split() " << endl;
 	Byte fingerprint_temp;
 	KeyValue kv_temp;
-	for(int i = 0; i < 2 * degree - 1; i ++){
-		for(int j = 0; j < 2 * degree - 1 - i; j ++){
+	for(int i = 0; i < 2 * LEAF_DEGREE - 1; i ++){
+		for(int j = 0; j < 2 * LEAF_DEGREE - 1 - i; j ++){
 			if(kv[j].k > kv[j + 1].k){
 				kv_temp = kv[j];
 				kv[j] = kv[j + 1];
@@ -436,31 +421,33 @@ KeyNode* LeafNode::split() {
 		}
 	}
 
-    KeyNode* newChild = new KeyNode();
+    KeyNode *newChild = new KeyNode();
+	LeafNode *leafNode = new LeafNode(tree);
     // TODO
-	newChild->node = new LeafNode(tree);
-	dynamic_cast<LeafNode *>(newChild->node)->n = (n + 1) / 2;
-	dynamic_cast<LeafNode *>(newChild->node)->prev = this;
-	for(uint64_t i = 0; i < dynamic_cast<LeafNode *>(newChild->node)->bitmapSize; i++){
+	newChild->key = findSplitKey();
+	newChild->node = leafNode;
+	leafNode->n = LEAF_DEGREE;
+	leafNode->prev = this;
+	for(uint64_t i = 0; i < (2 * LEAF_DEGREE + 7) / 8; i++){
 		for(uint64_t j = 0; j < 8; j ++){
-			if(j + i * 8 < dynamic_cast<LeafNode *>(newChild->node)->n){
-				dynamic_cast<LeafNode *>(newChild->node)->bitmap[i] |= (1 << j);
+			if(i * 8 + j < LEAF_DEGREE){
+				leafNode->bitmap[i] |= (1 << j);
 			}
 			else{
-				dynamic_cast<LeafNode *>(newChild->node)->bitmap[i] &= ~(1 << j);
+				leafNode->bitmap[i] &= ~(1 << j);
 			}
 		}
 	}
-	memcpy(dynamic_cast<LeafNode *>(newChild->node)->fingerprints, (char *)fingerprints + sizeof(Byte) * (n / 2), dynamic_cast<LeafNode *>(newChild->node)->n * sizeof(Byte));
-	memcpy(dynamic_cast<LeafNode *>(newChild->node)->kv, (char *)kv + sizeof(KeyValue) * (n / 2), dynamic_cast<LeafNode *>(newChild->node)->n * sizeof(KeyValue));
-	dynamic_cast<LeafNode *>(newChild->node)->persist();
+	memcpy(leafNode->fingerprints, fingerprints + LEAF_DEGREE, sizeof(Byte) * LEAF_DEGREE);
+	memcpy(leafNode->kv, kv +  LEAF_DEGREE, sizeof(KeyValue) * LEAF_DEGREE);
+	leafNode->persist();
 
-	n = n / 2;
-	next = dynamic_cast<LeafNode *>(newChild->node);
-	pNext = dynamic_cast<LeafNode *>(newChild->node)->getPPointer();
-	for(uint64_t i = 0; i < bitmapSize; i ++){
+	n = LEAF_DEGREE;
+	next = leafNode;
+	pNext = leafNode->getPPointer();
+	for(uint64_t i = 0; i < (2 * LEAF_DEGREE + 7) / 8; i ++){
 		for(uint64_t j = 0; j < 8; j ++){
-			if(j + i * 8 < n){
+			if(j + i * 8 < LEAF_DEGREE){
 				bitmap[i] |= (1 << j);
 			}
 			else{
@@ -468,11 +455,10 @@ KeyNode* LeafNode::split() {
 			}
 		}
 	}
-	memset(fingerprints + sizeof(Byte) * n, 0, sizeof(Byte) * (2 * LEAF_DEGREE - n));
-	memset(kv + sizeof(KeyValue) * n, 0, sizeof(KeyValue) * (2 * LEAF_DEGREE - n));
+	memset(fingerprints + LEAF_DEGREE, 0, sizeof(Byte) * LEAF_DEGREE);
+	memset(kv + LEAF_DEGREE, 0, sizeof(KeyValue) * LEAF_DEGREE);
 	persist();
 
-	newChild->key = dynamic_cast<LeafNode *>(newChild->node)->kv[0].k;
     return newChild;
 }
 
@@ -482,6 +468,9 @@ KeyNode* LeafNode::split() {
 Key LeafNode::findSplitKey() {
     Key midKey = 0;
     // TODO
+	if(n == 2 *  LEAF_DEGREE){
+		midKey = kv[LEAF_DEGREE].k;
+	}
     return midKey;
 }
 
@@ -575,7 +564,6 @@ void LeafNode::persist() {
 	else{
 		pmem_msync(this->pmem_addr, LEAF_SIZE);
 	}
-	//pmem_unmap(this->pmem_addr, LEAF_SIZE);
 }
 
 // call by the ~FPTree(), delete the whole tree
@@ -659,7 +647,6 @@ bool FPTree::bulkLoading() {
 	vector<LeafNode *> leafNodes;
 	KeyNode leaf;
 	while(pPointer.fileId != 0){
-		cout << pPointer.fileId << ' ' << pPointer.offset << endl;
 		leafNodes.push_back(new LeafNode(pPointer, tree_temp));
 		pPointer = leafNodes.back()->pNext;
 	}
