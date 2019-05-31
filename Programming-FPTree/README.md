@@ -125,7 +125,8 @@ src目录下的makefile测试：
   ```
 
 ## 结果
-*如果执行有误，进入root权限，make cleand之后重新编译
+*请根据需要在编译前执行make cleand删除以保存的数据
+*如果执行有误，进入root权限，make clean 和 make cleand之后重新编译
 Google Test测试结果：
 
 - utility_test
