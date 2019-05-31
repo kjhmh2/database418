@@ -63,6 +63,7 @@
       |__utility.h: 指纹计算等工具函数头文件
       |__clhash.h: 指纹计算所用哈希函数头文件
       |__p_allocator.h: NVM内存分配器头文件
+|__data:数据文件存放目录，需要映射至pmem
 |__src: 源码  
    |__bin: 可执行文件所在文件夹
       |__main: main.cpp的可执行文件
@@ -124,7 +125,7 @@ src目录下的makefile测试：
   ```
 
 ## 结果
-
+*如果执行有误，进入root权限，make cleand之后重新编译
 Google Test测试结果：
 
 - utility_test
