@@ -16,10 +16,13 @@ const int READ_WRITE_NUM = 2200000; // TODO: amount of operations
 int main()
 {        
     FPTree fptree(1028);
-    uint64_t inserted = 0, queried = 0;
-    uint64_t* keys = new uint64_t[READ_WRITE_NUM];
+    uint64_t inserted;
+	uint64_t queried;
+    uint64_t *keys = new uint64_t[READ_WRITE_NUM];
+	uint64_t key;
     bool* ifInsert = new bool[READ_WRITE_NUM];
 	FILE *ycsb, *ycsb_read;
+	char op[8];
     struct timespec start, finish;
     double single_time;
 
@@ -28,12 +31,9 @@ int main()
 
     // TODO: read the ycsb_load
     ycsb_read = fopen(load.c_str(), "r");
-	char op[8];
-	uint64_t key;
 	for(int i = 0; i < READ_WRITE_NUM; i ++){
-		if(fscanf(ycsb_read, "%s %lu", op, &key) == EOF)
+		if(fscanf(ycsb_read, "%s %lu", op, &keys[i]) == EOF)
 			break;
-		keys[i] = key;
 		ifInsert[i] = (op[0] == 'I');
 	}
     fclose(ycsb_read);          // close the file
@@ -41,18 +41,19 @@ int main()
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     // TODO: load the workload in the fptree
-	Key _key;
+	inserted = 0;	
+	queried = 0;
     for (int i = 0; i < READ_WRITE_NUM; ++ i)
     {
-		_key = keys[i];
+		key = keys[i];
         if (ifInsert[i])
         {
 			inserted ++;
-            fptree.insert(_key, _key);
+            fptree.insert(key, key);
         }
         else
         {
-            fptree.find(_key);
+            fptree.find(key);
         }
     }
 
@@ -64,38 +65,33 @@ int main()
     printf("Load phase single insert time: %fns\n", single_time / inserted);
 
 	printf("Run phase begins\n");
-
-	int operation_num = 0;
-    inserted = 0;	
-	queried = 0;	
+	
     // TODO: read the ycsb_run
     ycsb = fopen(run.c_str(), "r");
-    char op2[8];
-	uint64_t key2;
 	for(int i = 0; i < READ_WRITE_NUM; i ++){
-		if(fscanf(ycsb, "%s %lu", op2, &key2) == EOF)
+		if(fscanf(ycsb, "%s %lu", op, &keys[i]) == EOF)
 			break;
-		keys[i] = key2;
-		ifInsert[i] = (op2[0] == 'I');
+		ifInsert[i] = (op[0] == 'I');
 	}
 	fclose(ycsb);       // close the file
 
  	clock_gettime(CLOCK_MONOTONIC, &start);
 
     // TODO: load the workload in the fptree
-	Key _key2;
+	inserted = 0;	
+	queried = 0;
     for (int i = 0; i < READ_WRITE_NUM; ++ i)
     {
-		_key2 = keys[i];
+		key = keys[i];
         if (ifInsert[i])
         {
 			inserted ++;
-            fptree.insert(_key2, _key2);
+            fptree.insert(key, key);
         }
         else
         {
 			queried ++;
-            fptree.find(_key2);
+            fptree.find(key);
         }
     }
 
@@ -108,7 +104,6 @@ int main()
     printf("===================LevelDB====================\n");
     const string filePath = ""; // data storing folder(NVM)
 
-    memset(keys, 0, READ_WRITE_NUM);
     memset(ifInsert, 0, READ_WRITE_NUM);
 
     leveldb::DB* db;
@@ -120,37 +115,36 @@ int main()
     leveldb::Status status = leveldb::DB::Open(options, "/tmp/testdb", &db);
     assert(status.ok());
 	string res;
+	char (*leveldbKeys)[40] = new char[READ_WRITE_NUM][40];
+	char *leveldKey;
 
-    inserted = 0;
-	queried = 0;
     printf("Load phase begins \n");
     // TODO: read the ycsb_read
     ycsb_read = fopen(load.c_str(), "r");
-    char op3[8];
-	uint64_t key3;
+
 	for(int i = 0; i < READ_WRITE_NUM; i ++){
-		if(fscanf(ycsb_read, "%s %lu", op3, &key3) == EOF)
+		if(fscanf(ycsb_read, "%s %s", op, leveldbKeys[i]) == EOF)
 			break;
-		keys[i] = key3;
-		ifInsert[i] = (op3[0] == 'I');
+		ifInsert[i] = (op[0] == 'I');
 	}
     fclose(ycsb_read);          // close the file
 
     clock_gettime(CLOCK_MONOTONIC, &start);
     // TODO: load the levelDB
-    char _key3[40];
+	inserted = 0;	
+	queried = 0;
     for (int i = 0; i < READ_WRITE_NUM; ++ i)
     {	
-		sprintf(_key3,"%lu", keys[i]);
+		leveldKey = leveldbKeys[i];
         if (ifInsert[i])
         {	
 			inserted ++;
-            status = db->Put(write_options, _key3, _key3);
+            status = db->Put(write_options, leveldKey, leveldKey);
         }
         else
         {
 			queried ++;
-            status = db->Get(read_options, _key3, &res);
+            status = db->Get(read_options, leveldKey, &res);
         }
     }
 
@@ -161,35 +155,34 @@ int main()
     printf("Load phase single insert time: %fns\n", single_time / inserted);
 
 	printf("Run phase begin\n");
-    inserted = 0;		
+		
     // TODO: read the ycsb_run
     ycsb = fopen(run.c_str(), "r");
-    char op4[8];
-	uint64_t key4;
+
 	for(int i = 0; i < READ_WRITE_NUM; i ++){
-		if(fscanf(ycsb_read, "%s %lu", op4, &key4) == EOF)
+		if(fscanf(ycsb_read, "%s %s", op, leveldbKeys[i]) == EOF)
 			break;
-		keys[i] = key4;
-		ifInsert[i] = (op4[0] == 'I');
+		ifInsert[i] = (op[0] == 'I');
 	}
     fclose(ycsb);       // close the file
 
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     // TODO: run the workload_run in levelDB
-	char _key4[40];
+	inserted = 0;	
+	queried = 0;
     for (int i = 0; i < READ_WRITE_NUM; ++ i)
     {	
-		sprintf(_key4,"%lu", keys[i]);
+		leveldKey = leveldbKeys[i];
         if (ifInsert[i])
         {	
 			inserted ++;
-            status = db->Put(write_options, _key4, _key4);
+            status = db->Put(write_options, leveldKey, leveldKey);
         }
         else
         {
 			queried ++;
-            status = db->Get(read_options, _key4, &res);
+            status = db->Get(read_options, leveldKey, &res);
         }
     }
 	clock_gettime(CLOCK_MONOTONIC, &finish);
@@ -198,5 +191,9 @@ int main()
     printf("Run phase finishes: %lu/%lu items are inserted/searched\n", inserted, queried);
     printf("Run phase throughput: %f operations per second \n", READ_WRITE_NUM/single_time);	
     return 0;
+
+	delete [] keys;
+	delete [] ifInsert;
+	delete [] leveldbKeys;
 }
 

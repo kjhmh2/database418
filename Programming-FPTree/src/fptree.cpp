@@ -25,16 +25,16 @@ InnerNode::~InnerNode() {
 // binary search the first key in the innernode larger than input key
 int InnerNode::findIndex(const Key& k) {
     // TODO
-	if(nChild == 0){
+	/*if(nChild == 0){
 		return -1;
 	}
 	for(int i = 0; i < nKeys; i ++) {
 		if(keys[i] > k)
 			return i;
 	}
-    return nKeys;
-    /*int index = upper_bound(keys, keys + nKeys, k) - keys;
-    return index;*/
+    return nKeys;*/
+    int index = upper_bound(keys, keys + nKeys, k) - keys;
+    return index;
 }
 
 // insert the node that is assumed not full
@@ -570,9 +570,9 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
 
 LeafNode::~LeafNode() {
     // TODO
-	//delete [] bitmap;
-	//delete [] fingerprints;
-	//delete [] kv;
+	delete [] bitmap;
+	delete [] fingerprints;
+	delete [] kv;
 }
 
 // insert an entry into the leaf, need to split it if it is full
