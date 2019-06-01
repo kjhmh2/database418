@@ -525,6 +525,7 @@ LeafNode::LeafNode(FPTree* t) {
 	prev = next = nullptr;
 
 	PAllocator::getAllocator()->getLeaf(pPointer, pmem_addr);
+	is_pmem = 1;
 	filePath = DATA_DIR + to_string(pPointer.fileId);
 	bitmapSize = (2 * LEAF_DEGREE + 7) / 8;
 
@@ -549,7 +550,7 @@ LeafNode::LeafNode(PPointer p, FPTree* t) {
 	n = 0;
 	pPointer = p;
 	pmem_addr = PAllocator::getAllocator()->getLeafPmemAddr(pPointer);
-	is_pmem = pmem_is_pmem(this->pmem_addr, LEAF_SIZE);
+	is_pmem = 1;//pmem_is_pmem(this->pmem_addr, LEAF_SIZE);
 	filePath = DATA_DIR + to_string(pPointer.fileId);
 	bitmapSize = (2 * LEAF_DEGREE + 7) / 8;
 
