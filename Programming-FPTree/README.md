@@ -94,7 +94,7 @@
 
 ​	![GoogleTest1](https://github.com/kjhmh2/database418/blob/final/img/system.png)
 
-​	本次课程设计基于针对NVM优化的数据结构FPTree，实现一个简单的键值存储引擎FPTreeDB。将其包装成一个调用库，供用户程序使用并管理其数据存储，与LevelDB的使用方式类似.
+​	本次课程设计基于针对NVM优化的数据结构FPTree，实现一个简单的键值存储引擎FPTreeDB。将其包装成一个调用库，供用户程序使用并管理其数据存储，与LevelDB的使用方式类似
 
 ## 编译指令说明
 
